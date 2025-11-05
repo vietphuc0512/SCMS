@@ -1,0 +1,10 @@
+node_modules/ 
+scms-frontend/node_modules/ 
+scms-frontend/tailwindcss-windows-x64.exe 
+.env 
+.env.local 
+dist/ 
+build/ 
+.DS_Store 
+*.tsbuildinfo 
+coverage/ 
