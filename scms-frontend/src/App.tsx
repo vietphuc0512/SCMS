@@ -1,7 +1,7 @@
 // src/App.tsx
 import './App.css';
 import { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import LoginForm from '@/components/Auth/LoginForm';
 import RegisterForm from '@/components/Auth/RegisterForm';
@@ -22,8 +22,9 @@ import Reports from '@/pages/Reports';
 import Profile from '@/pages/Profile'; 
 import Notifications from '@/pages/Notifications';
 
-function App() {
+function AppContent() {
   const { user, isLoading } = useAuth();
+  const location = useLocation(); // ✅ thêm để bắt đường dẫn hiện tại
   const [activeTab, setActiveTab] = useState('dashboard');
 
   const handleCartClick = () => setActiveTab('orders');
@@ -72,6 +73,15 @@ function App() {
     }
   };
 
+  // ✅ Nếu đang ở /login hoặc /register → hiển thị form, bỏ qua user
+  if (location.pathname === '/login') {
+    return <LoginForm />;
+  }
+
+  if (location.pathname === '/register') {
+    return <RegisterForm />;
+  }
+
   // Màn hình loading
   if (isLoading) {
     return (
@@ -87,19 +97,20 @@ function App() {
   // Nếu chưa đăng nhập → hiển thị router cho Login & Register
   if (!user) {
     return (
-      <Router>
+      <>
         <Routes>
           <Route path="/" element={<LoginForm />} />
           <Route path="/register" element={<RegisterForm />} />
+          <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
         <Toaster />
-      </Router>
+      </>
     );
   }
 
   // Nếu đã đăng nhập → hiển thị giao diện chính
   return (
-    <Router>
+    <>
       <div className="fixed inset-0 flex bg-gray-50 overflow-hidden">
         <Sidebar 
           activeTab={activeTab} 
@@ -121,8 +132,14 @@ function App() {
         </div>
       </div>
       <Toaster />
-    </Router>
+    </>
   );
 }
 
-export default App;
+export default function App() {
+  return (
+    <Router>
+      <AppContent />
+    </Router>
+  );
+}
