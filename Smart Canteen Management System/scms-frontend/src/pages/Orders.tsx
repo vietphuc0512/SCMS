@@ -1,6 +1,6 @@
 // src/pages/Orders.tsx
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -16,19 +16,36 @@ import {
 import { Clock, Eye, CheckCircle, XCircle, AlertCircle, Plus, Minus, Trash2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
-import { useOrder } from '@/contexts/OrderContext'; // --- THAY ĐỔI 1: Import useOrder ---
-import { Order } from '@/types';
+import { useOrder } from '@/contexts/OrderContext';
+import { Order, Student } from '@/types';
 import { CartItem } from '@/types';
+import { mockStudents } from '@/data/mockData'; // --- THAY ĐỔI 1: Import mockStudents để lấy danh sách con cho Parent ---
 
 export default function Orders() {
   const { user } = useAuth();
   const { items, getTotalAmount, updateQuantity, removeItem, clearCart } = useCart();
-  
-  // --- THAY ĐỔI 2: Lấy dữ liệu và hàm từ OrderContext ---
   const { activeOrders, completedOrders, addOrder, updateOrderStatus, completeOrder } = useOrder();
 
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
+  
+  // --- THAY ĐỔI 2: State cho vai trò Manager (lọc theo ngày) ---
+  const [dateFilter, setDateFilter] = useState<{ start: string; end: string }>({ start: '', end: '' });
+  
+  // --- THAY ĐỔI 3: State cho vai trò Parent (chọn con để xem) ---
+  const [selectedChildId, setSelectedChildId] = useState<string>('');
+  const [myChildren, setMyChildren] = useState<Student[]>([]);
+
+  // Lấy danh sách con của Parent khi component được tải
+  useEffect(() => {
+    if (user?.role === 'parent') {
+      const children = mockStudents.filter(s => s.parentId === user.id);
+      setMyChildren(children);
+      if (children.length > 0 && !selectedChildId) {
+        setSelectedChildId(children[0].id); // Mặc định chọn con đầu tiên
+      }
+    }
+  }, [user, selectedChildId]);
 
   const handlePlaceOrder = async () => {
     if (items.length === 0) {
@@ -54,7 +71,6 @@ export default function Orders() {
       createdAt: new Date(),
     };
 
-    // --- THAY ĐỔI 3: Gọi hàm addOrder từ OrderContext ---
     addOrder(newOrder);
     
     console.log('Đã đặt hàng:', newOrder);
@@ -124,10 +140,80 @@ export default function Orders() {
       default: return method;
     }
   };
-
-  // --- THAY ĐỔI 4: Xóa các hàm updateOrderStatus và completeOrder ở đây vì đã có trong OrderContext ---
   
-  // ... (Giữ nguyên các component OrderCard và OrderDetailDialog)
+  // --- THAY ĐỔI 4: Cập nhật renderCurrentCart để hỗ trợ chế độ chỉ xem cho Parent ---
+  const renderCurrentCart = (isReadOnly = false) => (
+    <div className="space-y-4">
+      <h3 className="text-xl font-semibold">
+        {isReadOnly ? `Giỏ hàng của ${myChildren.find(c => c.id === selectedChildId)?.name}` : 'Giỏ hàng của bạn'}
+      </h3>
+      {items.length === 0 ? (
+        <Card>
+          <CardContent className="pt-6">
+            <p className="text-center text-muted-foreground">Giỏ hàng đang trống.</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <>
+          {items.map((item: CartItem) => (
+            <Card key={item.id}>
+              <CardContent className="pt-6">
+                <div className="flex justify-between items-center">
+                  <div className="flex-1">
+                    <h4 className="font-medium">{item.menuItem.name}</h4>
+                    <p className="text-sm text-muted-foreground">{formatCurrency(item.menuItem.price)}</p>
+                    {item.notes && <p className="text-sm text-muted-foreground">Ghi chú: {item.notes}</p>}
+                  </div>
+                  {isReadOnly ? (
+                    <div className="flex items-center space-x-2">
+                      <span className="w-8 text-center">{item.quantity}</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center space-x-2">
+                      <Button variant="outline" size="icon" onClick={() => updateQuantity(item.id, item.quantity - 1)}>
+                        <Minus className="h-4 w-4" />
+                      </Button>
+                      <span className="w-8 text-center">{item.quantity}</span>
+                      <Button variant="outline" size="icon" onClick={() => updateQuantity(item.id, item.quantity + 1)}>
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" onClick={() => removeItem(item.id)}>
+                        <Trash2 className="h-4 w-4 text-red-500" />
+                      </Button>
+                    </div>
+                  )}
+                  <div className="ml-4 text-right">
+                    <p className="font-semibold">{formatCurrency(item.menuItem.price * item.quantity)}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex justify-between items-center text-lg font-bold">
+                <span>Tổng cộng:</span>
+                <span>{formatCurrency(getTotalAmount())}</span>
+              </div>
+              {!isReadOnly && (
+                <Button 
+                  className="w-full mt-4" 
+                  onClick={handlePlaceOrder} 
+                  disabled={isPlacingOrder}
+                >
+                  {isPlacingOrder ? 'Đang đặt hàng...' : 'Đặt hàng'}
+                </Button>
+              )}
+              {isReadOnly && (
+                 <p className="text-center text-sm text-muted-foreground mt-4">Đây là chế độ xem chỉ dành cho phụ huynh.</p>
+              )}
+            </CardContent>
+          </Card>
+        </>
+      )}
+    </div>
+  );
+
   const OrderCard = ({ order }: { order: Order }) => (
     <Card className="hover:shadow-md transition-shadow">
       <CardHeader className="pb-3">
@@ -175,7 +261,6 @@ export default function Orders() {
               </DialogTrigger>
             </Dialog>
 
-            {/* --- THAY ĐỔI 5: Các nút hành động cho Staff (giữ nguyên) --- */}
             {user?.role === 'staff' && (
               <div className="flex space-x-2">
                 {order.status === 'pending' && (
@@ -259,132 +344,90 @@ export default function Orders() {
     </DialogContent>
   );
 
-  const renderCurrentCart = () => (
+  // --- THAY ĐỔI 5: Tạo hàm lọc lịch sử đơn hàng cho Manager theo ngày ---
+  const getFilteredCompletedOrders = () => {
+    if (!dateFilter.start && !dateFilter.end) {
+      return completedOrders;
+    }
+    return completedOrders.filter(order => {
+      const orderDate = new Date(order.createdAt).toDateString();
+      const startDate = dateFilter.start ? new Date(dateFilter.start).toDateString() : null;
+      const endDate = dateFilter.end ? new Date(dateFilter.end).toDateString() : null;
+      
+      if (startDate && endDate) {
+        return orderDate >= startDate && orderDate <= endDate;
+      }
+      if (startDate) {
+        return orderDate >= startDate;
+      }
+      if (endDate) {
+        return orderDate <= endDate;
+      }
+      return true;
+    });
+  };
+
+  const renderActiveOrders = (ordersToRender = activeOrders) => (
+    <Tabs defaultValue="pending" className="space-y-4">
+      <TabsList>
+        <TabsTrigger value="pending">Chờ xử lý</TabsTrigger>
+        <TabsTrigger value="preparing">Đang làm</TabsTrigger>
+        <TabsTrigger value="ready">Sẵn sàng</TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="pending" className="space-y-4">
+        {ordersToRender.filter(o => o.status === 'pending').map(order => (
+          <OrderCard key={order.id} order={order} />
+        ))}
+        {ordersToRender.filter(o => o.status === 'pending').length === 0 && <p className="text-muted-foreground">Không có đơn hàng nào chờ xử lý.</p>}
+      </TabsContent>
+
+      <TabsContent value="preparing" className="space-y-4">
+        {ordersToRender.filter(o => o.status === 'preparing').map(order => (
+          <OrderCard key={order.id} order={order} />
+        ))}
+        {ordersToRender.filter(o => o.status === 'preparing').length === 0 && <p className="text-muted-foreground">Không có đơn hàng nào đang được chuẩn bị.</p>}
+      </TabsContent>
+
+      <TabsContent value="ready" className="space-y-4">
+        {ordersToRender.filter(o => o.status === 'ready').map(order => (
+          <OrderCard key={order.id} order={order} />
+        ))}
+        {ordersToRender.filter(o => o.status === 'ready').length === 0 && <p className="text-muted-foreground">Không có đơn hàng nào sẵn sàng.</p>}
+      </TabsContent>
+    </Tabs>
+  );
+
+  const renderOrderHistory = (ordersToRender: Order[]) => (
     <div className="space-y-4">
-      <h3 className="text-xl font-semibold">Giỏ hàng của bạn</h3>
-      {items.length === 0 ? (
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-center text-muted-foreground">Giỏ hàng của bạn đang trống. Hãy thêm món từ thực đơn!</p>
-          </CardContent>
-        </Card>
+      {ordersToRender.length > 0 ? (
+        ordersToRender.map(order => (
+          <OrderCard key={order.id} order={order} />
+        ))
       ) : (
-        <>
-          {items.map((item: CartItem) => (
-            <Card key={item.id}>
-              <CardContent className="pt-6">
-                <div className="flex justify-between items-center">
-                  <div className="flex-1">
-                    <h4 className="font-medium">{item.menuItem.name}</h4>
-                    <p className="text-sm text-muted-foreground">{formatCurrency(item.menuItem.price)}</p>
-                    {item.notes && <p className="text-sm text-muted-foreground">Ghi chú: {item.notes}</p>}
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Button variant="outline" size="icon" onClick={() => updateQuantity(item.id, item.quantity - 1)}>
-                      <Minus className="h-4 w-4" />
-                    </Button>
-                    <span className="w-8 text-center">{item.quantity}</span>
-                    <Button variant="outline" size="icon" onClick={() => updateQuantity(item.id, item.quantity + 1)}>
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" onClick={() => removeItem(item.id)}>
-                      <Trash2 className="h-4 w-4 text-red-500" />
-                    </Button>
-                  </div>
-                  <div className="ml-4 text-right">
-                    <p className="font-semibold">{formatCurrency(item.menuItem.price * item.quantity)}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex justify-between items-center text-lg font-bold">
-                <span>Tổng cộng:</span>
-                <span>{formatCurrency(getTotalAmount())}</span>
-              </div>
-              <Button 
-                className="w-full mt-4" 
-                onClick={handlePlaceOrder} 
-                disabled={isPlacingOrder}
-              >
-                {isPlacingOrder ? 'Đang đặt hàng...' : 'Đặt hàng'}
-              </Button>
-            </CardContent>
-          </Card>
-        </>
+        <p className="text-muted-foreground">Không có đơn hàng nào đã hoàn thành trong khoảng thời gian này.</p>
       )}
     </div>
   );
-
-  // --- THAY ĐỔI 6: Lọc đơn hàng cho học sinh ---
-  const studentActiveOrders = activeOrders.filter(order => order.userId === user?.id);
-  const studentCompletedOrders = completedOrders.filter(order => order.userId === user?.id);
-
-  const renderActiveOrders = () => {
-    const ordersToShow = user?.role === 'student' ? studentActiveOrders : activeOrders;
-    return (
-      <Tabs defaultValue="pending" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="pending">Chờ xử lý</TabsTrigger>
-          <TabsTrigger value="preparing">Đang làm</TabsTrigger>
-          <TabsTrigger value="ready">Sẵn sàng</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="pending" className="space-y-4">
-          {ordersToShow.filter(o => o.status === 'pending').map(order => (
-            <OrderCard key={order.id} order={order} />
-          ))}
-          {ordersToShow.filter(o => o.status === 'pending').length === 0 && <p className="text-muted-foreground">Không có đơn hàng nào chờ xử lý.</p>}
-        </TabsContent>
-
-        <TabsContent value="preparing" className="space-y-4">
-          {ordersToShow.filter(o => o.status === 'preparing').map(order => (
-            <OrderCard key={order.id} order={order} />
-          ))}
-          {ordersToShow.filter(o => o.status === 'preparing').length === 0 && <p className="text-muted-foreground">Không có đơn hàng nào đang được chuẩn bị.</p>}
-        </TabsContent>
-
-        <TabsContent value="ready" className="space-y-4">
-          {ordersToShow.filter(o => o.status === 'ready').map(order => (
-            <OrderCard key={order.id} order={order} />
-          ))}
-          {ordersToShow.filter(o => o.status === 'ready').length === 0 && <p className="text-muted-foreground">Không có đơn hàng nào sẵn sàng.</p>}
-        </TabsContent>
-      </Tabs>
-    );
-  };
-
-  const renderOrderHistory = () => {
-    const ordersToShow = user?.role === 'student' ? studentCompletedOrders : completedOrders;
-    return (
-      <div className="space-y-4">
-        {ordersToShow.length > 0 ? (
-          ordersToShow.map(order => (
-            <OrderCard key={order.id} order={order} />
-          ))
-        ) : (
-          <p className="text-muted-foreground">Bạn chưa có đơn hàng nào đã hoàn thành.</p>
-        )}
-      </div>
-    );
-  };
 
   return (
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold">
-          {user?.role === 'student' ? 'Đơn hàng của tôi' : 'Quản lý đơn hàng'}
+          {user?.role === 'student' && 'Đơn hàng của tôi'}
+          {user?.role === 'staff' && 'Quản lý đơn hàng'}
+          {user?.role === 'parent' && 'Theo dõi đơn hàng của con'}
+          {user?.role === 'manager' && 'Quản lý tất cả đơn hàng'}
         </h2>
         <p className="text-muted-foreground">
-          {user?.role === 'student' 
-            ? 'Quản lý giỏ hàng và theo dõi đơn hàng của bạn'
-            : 'Xử lý và theo dõi tất cả đơn hàng'
-          }
+          {user?.role === 'student' && 'Quản lý giỏ hàng và theo dõi đơn hàng của bạn'}
+          {user?.role === 'staff' && 'Xử lý và theo dõi tất cả đơn hàng'}
+          {user?.role === 'parent' && 'Xem giỏ hàng và theo dõi trạng thái đơn hàng của con'}
+          {user?.role === 'manager' && 'Xem trạng thái và lịch sử của tất cả đơn hàng'}
         </p>
       </div>
 
+      {/* --- Giao diện cho Student (giữ nguyên) --- */}
       {user?.role === 'student' && (
         <Tabs defaultValue="cart" className="space-y-4">
           <TabsList>
@@ -396,17 +439,106 @@ export default function Orders() {
             {renderCurrentCart()}
           </TabsContent>
           <TabsContent value="active">
-            {renderActiveOrders()}
+            {renderActiveOrders(activeOrders.filter(o => o.userId === user.id))}
           </TabsContent>
           <TabsContent value="history">
-            {renderOrderHistory()}
+            {renderOrderHistory(completedOrders.filter(o => o.userId === user.id))}
           </TabsContent>
         </Tabs>
       )}
 
-      {user?.role !== 'student' && renderActiveOrders()}
+      {/* --- Giao diện cho Parent --- */}
+      {user?.role === 'parent' && (
+        <div className="space-y-4">
+          {myChildren.length > 0 ? (
+            <>
+              <div className="flex items-center space-x-2">
+                <label htmlFor="child-select" className="text-sm font-medium">Chọn học sinh:</label>
+                <select 
+                  id="child-select"
+                  value={selectedChildId} 
+                  onChange={(e) => setSelectedChildId(e.target.value)}
+                  className="border border-gray-300 rounded-md px-3 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  {myChildren.map(child => (
+                    <option key={child.id} value={child.id}>{child.name}</option>
+                  ))}
+                </select>
+              </div>
+              <Tabs defaultValue="cart" className="space-y-4">
+                <TabsList>
+                  <TabsTrigger value="cart">Giỏ hàng</TabsTrigger>
+                  <TabsTrigger value="active">Đơn hàng hiện tại</TabsTrigger>
+                  <TabsTrigger value="history">Lịch sử</TabsTrigger>
+                </TabsList>
+                <TabsContent value="cart">
+                  {renderCurrentCart(true)} {/* true: chế độ chỉ xem */}
+                </TabsContent>
+                <TabsContent value="active">
+                  {renderActiveOrders(activeOrders.filter(o => o.userId === selectedChildId))}
+                </TabsContent>
+                <TabsContent value="history">
+                  {renderOrderHistory(completedOrders.filter(o => o.userId === selectedChildId))}
+                </TabsContent>
+              </Tabs>
+            </>
+          ) : (
+            <p>Không tìm thấy học sinh nào liên kết với tài khoản của bạn.</p>
+          )}
+        </div>
+      )}
 
-      <Dialog>
+      {/* --- Giao diện cho Staff (giữ nguyên) --- */}
+      {user?.role === 'staff' && renderActiveOrders()}
+
+      {/* --- Giao diện cho Manager --- */}
+      {user?.role === 'manager' && (
+        <div className="space-y-6">
+          <div>
+            <h3 className="text-xl font-semibold mb-4">Đơn hàng đang hoạt động</h3>
+            {renderActiveOrders()}
+          </div>
+
+          <div>
+            <h3 className="text-xl font-semibold mb-4">Lịch sử tất cả đơn hàng</h3>
+            <Card className="mb-4">
+              <CardContent className="pt-6">
+                <div className="flex items-end space-x-4">
+                  <div>
+                    <label htmlFor="start-date" className="block text-sm font-medium text-gray-700 mb-1">Từ ngày</label>
+                    <input
+                      id="start-date"
+                      type="date"
+                      value={dateFilter.start}
+                      onChange={(e) => setDateFilter(prev => ({ ...prev, start: e.target.value }))}
+                      className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="end-date" className="block text-sm font-medium text-gray-700 mb-1">Đến ngày</label>
+                    <input
+                      id="end-date"
+                      type="date"
+                      value={dateFilter.end}
+                      onChange={(e) => setDateFilter(prev => ({ ...prev, end: e.target.value }))}
+                      className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setDateFilter({ start: '', end: '' })}
+                  >
+                    Xóa bộ lọc
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+            {renderOrderHistory(getFilteredCompletedOrders())}
+          </div>
+        </div>
+      )}
+
+      <Dialog open={!!selectedOrder} onOpenChange={() => setSelectedOrder(null)}>
         <OrderDetailDialog />
       </Dialog>
     </div>

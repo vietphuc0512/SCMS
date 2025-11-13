@@ -9,6 +9,7 @@ interface UserBase {
   email: string;
   role: 'student' | 'staff' | 'manager' | 'admin' | 'parent';
   avatar?: string;
+  parentEmail?: string;
 }
 
 // Kiểu User được mở rộng cho Student
