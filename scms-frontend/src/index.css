@@ -1,0 +1,81 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ⚠️ Đặt các @layer sau khi đã import 3 dòng @tailwind trên */
+@layer base {
+  :root {
+    /* 🌿 Smart Canteen Light Theme */
+    --background: 0 0% 100%;
+    --foreground: 24 10% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 24 10% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 24 10% 10%;
+
+    --primary: 24 95% 53%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 183 47% 92%;
+    --secondary-foreground: 200 25% 20%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 46%;
+    --accent: 45 97% 85%;
+    --accent-foreground: 24 10% 10%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 24 95% 53%;
+    --radius: 0.5rem;
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 24 10% 15%;
+    --sidebar-primary: 24 95% 53%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 45 97% 90%;
+    --sidebar-accent-foreground: 24 10% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 24 95% 53%;
+  }
+
+  .dark {
+    --background: 220 15% 10%;
+    --foreground: 45 20% 90%;
+    --card: 220 15% 12%;
+    --card-foreground: 45 20% 90%;
+    --popover: 220 15% 12%;
+    --popover-foreground: 45 20% 90%;
+    --primary: 24 95% 60%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 200 25% 25%;
+    --secondary-foreground: 45 20% 90%;
+    --muted: 215 20% 20%;
+    --muted-foreground: 215 15% 70%;
+    --accent: 45 80% 25%;
+    --accent-foreground: 45 20% 90%;
+    --destructive: 0 65% 35%;
+    --destructive-foreground: 45 20% 90%;
+    --border: 215 20% 25%;
+    --input: 215 20% 25%;
+    --ring: 24 95% 60%;
+    --sidebar-background: 220 15% 10%;
+    --sidebar-foreground: 45 20% 90%;
+    --sidebar-primary: 24 95% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 45 80% 20%;
+    --sidebar-accent-foreground: 45 20% 90%;
+    --sidebar-border: 215 20% 25%;
+    --sidebar-ring: 24 95% 60%;
+  }
+}
+
+/* Base styles apply ở cuối */
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
