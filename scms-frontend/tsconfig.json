@@ -18,8 +18,8 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"]
-    },
-    "types": ["react", "react-dom"] // Thêm dòng này để đảm bảo nhận diện types
+    }
+    /* nếu muốn, có thể thêm "types": ["react", "react-dom"] nhưng bắt buộc cài @types/... */
   },
   "include": ["src"]
 }
