@@ -1,0 +1,41 @@
+Demo Account
+
+Click on account to login quickly (password: 123456)
+
+Student
+
+Nguyen Van An
+
+an.student@fschool.edu.vn
+
+Staff
+
+Pham Thi Dung
+
+dung.staff@fschool.edu.vn
+
+Manager
+
+Hoang Van Em
+
+em.manager@fschool.edu.vn
+
+Admin
+
+Dinh Thi Phuong
+
+phuong.admin@fschool.edu.vn
+
+Parent
+
+Nguyen Van Hung
+
+hung.parent@gmail.com
+
+Parent
+
+Le Thi Mai
+
+mai.parent@gmail.com
+
+Note: This is demo data. In reality, the system will connect to a real database.

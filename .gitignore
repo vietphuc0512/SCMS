@@ -11,6 +11,11 @@
 *.userosscache
 *.sln.docstates
 *.env
+# TypeScript build output
+dist/
+build/
+out/
+*.tsbuildinfo
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
