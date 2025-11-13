@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("SCMS.Data")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a577bb6e65cca77cdb9c5170e0046094b80255a4")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e6306de85b6f864ffd0ca5427639bcda85610a9b")]
 [assembly: System.Reflection.AssemblyProductAttribute("SCMS.Data")]
 [assembly: System.Reflection.AssemblyTitleAttribute("SCMS.Data")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
